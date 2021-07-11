@@ -3,15 +3,19 @@ package ru.geekbrains.june.chat.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
     private List<ClientHandler> clients;
+    AuthenticationProvider authenticationProvider;
+
 
     public Server() { // конструктор сервера
         try {
             this.clients = new ArrayList<>();
+            authenticationProvider = new DataBaseAuthenticationProvider();
             ServerSocket serverSocket = new ServerSocket(8189);
             System.out.println("Сервер запущен. Ожидаем подключение клиентов..");
             while (true) {
@@ -74,5 +78,9 @@ public class Server {
             }
         }
         sender.sendMessage("Пользователь " + receiverUsername + " не в сети");
+    }
+
+    public AuthenticationProvider getAuthenticationProvider() {
+        return authenticationProvider;
     }
 }

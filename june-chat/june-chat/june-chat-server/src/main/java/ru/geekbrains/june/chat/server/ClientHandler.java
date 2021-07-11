@@ -70,17 +70,17 @@ public class ClientHandler {
     }
 
     private boolean consumeAuthorizeMessage(String message) { // в авторизацию добавлена отсылку клиенту авторизованного имени и дату авторизации
-        if (message.startsWith("/auth ")) { // /auth bob
+        if (message.startsWith("/auth ")) { // /auth bob@mail.ru 123456
             String[] tokens = message.split("\\s+");
-            if (tokens.length == 1) {
-                sendMessage("SERVER: Вы не указали имя пользователя");
+            if (tokens.length == 1 || tokens.length == 2) {
+                sendMessage("SERVER: Вы не указали имя пользователя или пароль");
                 return false;
             }
-            if (tokens.length > 2) {
+            if (tokens.length > 3) {
                 sendMessage("SERVER: Имя пользователя не может состоять из нескольких слов");
                 return false;
             }
-            String selectedUsername = tokens[1];
+            String selectedUsername = server.getAuthenticationProvider().getUsernameByLoginAndPassword(tokens[2] , tokens[3]);
             if (server.isUsernameUsed(selectedUsername)) {
                 sendMessage("SERVER: Данное имя пользователя уже занято");
                 return false;

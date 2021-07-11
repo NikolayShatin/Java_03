@@ -10,19 +10,19 @@ public class ServerApp {
     */
     public static void main(String[] args) {
 
-        DataBase dataBase = new DataBase();
+        DataBaseAuthenticationProvider dataBaseAuthenticationProvider = new DataBaseAuthenticationProvider();
 
         try {
-            dataBase.connect();
-            dataBase.dropTable();
-            dataBase.createTable();
-            dataBase.insertUsers(10);
-            dataBase.readTable();
-            dataBase.disconnect();
+            dataBaseAuthenticationProvider.connect();
+            dataBaseAuthenticationProvider.dropTable();
+            dataBaseAuthenticationProvider.createTable();
+            dataBaseAuthenticationProvider.insertUsers();
+            System.out.println(dataBaseAuthenticationProvider.getUsernameByLoginAndPassword("john@freemail.com", "123456"));
+            dataBaseAuthenticationProvider.disconnect();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         } finally {
-            dataBase.disconnect();
+            dataBaseAuthenticationProvider.disconnect();
         }
 
 
