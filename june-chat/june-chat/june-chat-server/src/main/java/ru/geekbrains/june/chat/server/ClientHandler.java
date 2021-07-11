@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 public class ClientHandler {
@@ -80,9 +81,9 @@ public class ClientHandler {
                 sendMessage("SERVER: Имя пользователя не может состоять из нескольких слов");
                 return false;
             }
-            String selectedUsername = server.getAuthenticationProvider().getUsernameByLoginAndPassword(tokens[2] , tokens[3]);
-            if (server.isUsernameUsed(selectedUsername)) {
-                sendMessage("SERVER: Данное имя пользователя уже занято");
+            String selectedUsername = server.getAuthenticationProvider().getUsernameByLoginAndPassword(tokens[1] , tokens[2]);
+            if (selectedUsername == null) {
+                sendMessage("SERVER: Неверное имя пользователя или пароль");
                 return false;
             }
             username = selectedUsername;
@@ -120,5 +121,7 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if (server)
     }
 }

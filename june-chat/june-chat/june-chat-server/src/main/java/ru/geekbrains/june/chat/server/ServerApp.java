@@ -18,11 +18,8 @@ public class ServerApp {
             dataBaseAuthenticationProvider.createTable();
             dataBaseAuthenticationProvider.insertUsers();
             System.out.println(dataBaseAuthenticationProvider.getUsernameByLoginAndPassword("john@freemail.com", "123456"));
-            dataBaseAuthenticationProvider.disconnect();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            dataBaseAuthenticationProvider.disconnect();
         }
 
 
