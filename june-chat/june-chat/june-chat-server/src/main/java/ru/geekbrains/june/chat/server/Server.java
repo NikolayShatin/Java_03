@@ -3,13 +3,12 @@ package ru.geekbrains.june.chat.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
     private List<ClientHandler> clients;
-    AuthenticationProvider authenticationProvider;
+    private DataBaseAuthenticationProvider authenticationProvider;
 
 
     public Server() { // конструктор сервера
@@ -25,6 +24,8 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            authenticationProvider.disconnect();
         }
     }
 
@@ -80,7 +81,7 @@ public class Server {
         sender.sendMessage("Пользователь " + receiverUsername + " не в сети");
     }
 
-    public AuthenticationProvider getAuthenticationProvider() {
+    public DataBaseAuthenticationProvider getAuthenticationProvider() {
         return authenticationProvider;
     }
 }

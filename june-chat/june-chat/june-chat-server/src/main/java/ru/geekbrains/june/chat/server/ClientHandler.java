@@ -16,6 +16,7 @@ public class ClientHandler {
     private DataOutputStream out;
     private Date date; // добавили время, когда клиент подключился к серверу
     private SimpleDateFormat formatDate; // форматирование времени
+    private String mail; // сохраним для смены имени по имейлу
 
     public String getUsername() {
         return username;
@@ -64,6 +65,13 @@ public class ClientHandler {
                 String[] tokens = inputMessage.split("\\s+", 3);
                 server.sendPersonalMessage(this, tokens[1], tokens[2]);
             }
+            if (inputMessage.startsWith("/chname ")) { // меняем имя пользователя
+                String[] tokens = inputMessage.split("\\s+", 2);
+                server.getAuthenticationProvider().changeName(tokens[1], mail);
+                sendMessage("/exit");
+            }
+
+
             return true;
         }
         server.broadcastMessage(username + ": " + inputMessage);
@@ -81,12 +89,13 @@ public class ClientHandler {
                 sendMessage("SERVER: Имя пользователя не может состоять из нескольких слов");
                 return false;
             }
-            String selectedUsername = server.getAuthenticationProvider().getUsernameByLoginAndPassword(tokens[1] , tokens[2]);
+            String selectedUsername = server.getAuthenticationProvider().getUsernameByLoginAndPassword(tokens[1] , tokens[2]); // проверяем, что
             if (selectedUsername == null) {
                 sendMessage("SERVER: Неверное имя пользователя или пароль");
                 return false;
             }
             username = selectedUsername;
+            mail = tokens[1];
             date = new Date();
             formatDate = new SimpleDateFormat("HH:mm:ss yyyy.MM.dd");
             sendMessage("/authok "+username+ " " + formatDate.format(date));// отправка авторизационного сообщения с доп информацией о дате и имени
@@ -122,6 +131,5 @@ public class ClientHandler {
             e.printStackTrace();
         }
 
-        if (server)
     }
 }

@@ -48,12 +48,7 @@ public class DataBaseAuthenticationProvider implements AuthenticationProvider {
                         "    );");
 
 
-//                "create table if not exists users (\n" +
-//                "id integer primary key autoincrement not null,\n" +
-//                "login text not null,\n"+
-//                "password text not null\n" +
-//                "name text not null\n" +
-//                ");";
+
         System.out.println(sql);
         statement.executeUpdate(sql);
     }
@@ -74,27 +69,25 @@ public class DataBaseAuthenticationProvider implements AuthenticationProvider {
         }
     }
 
+    public void changeName(String name, String login) {
+        try (PreparedStatement preparedStatement =
+                     connection.prepareStatement("update users set name = ? where login = ? ")) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, login);
+            preparedStatement.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
 
-//        for (int i = 0; i<count; i++){
-//            String sql = "Insert into users (login, password) values('name"+ i +"', '+123456 + ');";
-//            statement.executeUpdate(sql);
-//        }
+
+
 
 
     public void dropTable() throws SQLException { // удалить таблицу
         statement.execute("drop table users;");
     }
 
-    public void readTable() throws SQLException {
-        String sql = "select * from users;";
-        ResultSet rs = statement.executeQuery(sql);
-        while (rs.next()) { // пока есть следующий элемент
-            System.out.println(rs.getInt("id") + " " +
-                    rs.getString(2) + " " +
-                    rs.getString(3) + " " +
-                    rs.getString(4));
-        }
-    }
 
 
     @Override
