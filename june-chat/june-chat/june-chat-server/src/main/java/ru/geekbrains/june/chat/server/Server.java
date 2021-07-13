@@ -8,10 +8,13 @@ import java.util.List;
 
 public class Server {
     private List<ClientHandler> clients;
+    private DataBaseAuthenticationProvider authenticationProvider;
+
 
     public Server() { // конструктор сервера
         try {
             this.clients = new ArrayList<>();
+            authenticationProvider = new DataBaseAuthenticationProvider();
             ServerSocket serverSocket = new ServerSocket(8189);
             System.out.println("Сервер запущен. Ожидаем подключение клиентов..");
             while (true) {
@@ -21,6 +24,8 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            authenticationProvider.disconnect();
         }
     }
 
@@ -74,5 +79,9 @@ public class Server {
             }
         }
         sender.sendMessage("Пользователь " + receiverUsername + " не в сети");
+    }
+
+    public DataBaseAuthenticationProvider getAuthenticationProvider() {
+        return authenticationProvider;
     }
 }
