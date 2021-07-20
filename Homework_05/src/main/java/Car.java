@@ -1,3 +1,4 @@
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.Lock;
@@ -56,7 +57,14 @@ public class Car implements Runnable {
         for (int i = 0; i < race.getStages().size(); i++) {
             race.getStages().get(i).go(this);
         }
-    }
 
+        try {
+            MainClass.countDownLatch2.countDown();
+            MainClass.countDownLatch2.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 }

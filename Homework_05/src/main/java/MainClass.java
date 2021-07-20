@@ -22,6 +22,8 @@ public class MainClass {
     //public static Object mon = new Object();
 
     public static CountDownLatch countDownLatch = new CountDownLatch(CARS_COUNT); // защелка, чтобы все стартовали из одной точки
+    public static CyclicBarrier cyclicBarrier = new CyclicBarrier(CARS_COUNT);//  чтобы объявить о завершении гонки
+    public static CountDownLatch countDownLatch2 = new CountDownLatch(CARS_COUNT);
 
     public static void main(String[] args) throws BrokenBarrierException, InterruptedException {
 
@@ -45,8 +47,9 @@ public class MainClass {
 
         //countDownLatch.await();
         //Thread.currentThread().wait();
+        countDownLatch.await();
         System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка началась!!!");
-
+        countDownLatch2.await();
         System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка закончилась!!!");
     }
 }
