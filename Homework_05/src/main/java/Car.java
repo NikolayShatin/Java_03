@@ -31,7 +31,7 @@ public class Car implements Runnable {
         this.name = "Участник #" + CAR_NUMBER;
     }
 
-    //Lock lock = new ReentrantLock();
+
     //CountDownLatch countDownLatch = new CountDownLatch(1);
 
     @Override
@@ -59,10 +59,17 @@ public class Car implements Runnable {
         }
 
         try {
+            MainClass.lock.lock();
+            System.out.println("Финишировал " + name);
+        } finally {
             MainClass.countDownLatch2.countDown();
-            MainClass.countDownLatch2.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            MainClass.lock.unlock();
+            try {
+                MainClass.countDownLatch2.await();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
     }

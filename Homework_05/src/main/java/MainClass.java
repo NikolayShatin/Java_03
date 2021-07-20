@@ -11,6 +11,8 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MainClass {
     public static final int CARS_COUNT = 4;
@@ -22,8 +24,9 @@ public class MainClass {
     //public static Object mon = new Object();
 
     public static CountDownLatch countDownLatch = new CountDownLatch(CARS_COUNT); // защелка, чтобы все стартовали из одной точки
-    public static CyclicBarrier cyclicBarrier = new CyclicBarrier(CARS_COUNT);//  чтобы объявить о завершении гонки
-    public static CountDownLatch countDownLatch2 = new CountDownLatch(CARS_COUNT);
+
+    public static CountDownLatch countDownLatch2 = new CountDownLatch(CARS_COUNT);//  чтобы объявить о завершении гонки
+    public static Lock lock = new ReentrantLock(); // захватить флаг победы
 
     public static void main(String[] args) throws BrokenBarrierException, InterruptedException {
 
