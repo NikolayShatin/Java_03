@@ -5,24 +5,21 @@ import java.sql.SQLException;
 public class ServerApp {
     /*
         Домашнее задание:
-        1. Разобраться с кодом, проставить "глобальные" комментарии
-        2. В любом виде, на клиенте выведите его имя на интерфейс
+        1. Добавить в сетевой чат авторизацию через базу данных SQLite.
+        2.*Добавить в сетевой чат возможность смены ника.
     */
     public static void main(String[] args) {
 
-        DataBase dataBase = new DataBase();
+        DataBaseAuthenticationProvider dataBaseAuthenticationProvider = new DataBaseAuthenticationProvider();
 
         try {
-            dataBase.connect();
-            dataBase.dropTable();
-            dataBase.createTable();
-            dataBase.insertUsers(10);
-            dataBase.readTable();
-            dataBase.disconnect();
+            dataBaseAuthenticationProvider.connect();
+            dataBaseAuthenticationProvider.dropTable();
+            dataBaseAuthenticationProvider.createTable();
+            dataBaseAuthenticationProvider.insertUsers();
+            System.out.println(dataBaseAuthenticationProvider.getUsernameByLoginAndPassword("john@freemail.com", "123456"));
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            dataBase.disconnect();
         }
 
 

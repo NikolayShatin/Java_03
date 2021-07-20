@@ -1,9 +1,7 @@
 package ru.geekbrains.june.chat.client;
 
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -12,15 +10,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.URL;
-import java.util.ResourceBundle;
 
 public class Controller {
     @FXML
     TextArea chatArea;
 
     @FXML
-    TextField messageField, usernameField;
+    TextField messageField, loginField;
 
     @FXML
     HBox authPanel, msgPanel, statusPanel; // добавили панель отображения статуса
@@ -30,6 +26,10 @@ public class Controller {
 
     @FXML
     Label labelName; // отображение статуса реализовано через лейбл
+
+    @FXML
+    PasswordField passwordField; // добавлено поле для ввода пароля
+
 
     private Socket socket;
     private DataInputStream in;
@@ -66,11 +66,12 @@ public class Controller {
         }
     }
 
-    public void tryToAuth() { // метод, отсылающий на сервер имя и команду авторизации
+    public void tryToAuth() { // метод, отсылающий на сервер логин/пароль и команду авторизации
         connect();
         try {
-            out.writeUTF("/auth " + usernameField.getText());
-            usernameField.clear();
+            out.writeUTF("/auth " + loginField.getText() + " " + passwordField.getText());
+            loginField.clear();
+            passwordField.clear();
         } catch (IOException e) {
             showError("Невозможно отправить запрос авторизации на сервер");
         }
