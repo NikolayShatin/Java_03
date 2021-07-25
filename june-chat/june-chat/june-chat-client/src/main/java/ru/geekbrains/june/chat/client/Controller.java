@@ -8,9 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -34,6 +32,7 @@ public class Controller {
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+    private String nickname;
 
     public void setAuthorized(boolean authorized) { // метод, который переключает интерфейс после авторизации
         msgPanel.setVisible(authorized);
@@ -99,7 +98,7 @@ public class Controller {
                 }
                 if (inputMessage.startsWith("/authok ")) {
                     setAuthorized(true);
-                    Platform.runLater(() -> setLabelText(inputMessage)); // в JavaFX потоке установим текст для лейбла
+                    Platform.runLater(() -> setLabelText(inputMessage));// в JavaFX потоке установим текст для лейбла и выведем 100 строк чата
                     break;
                 }
 
@@ -132,8 +131,31 @@ public class Controller {
         }
     }
 
+
+    private void prepairFile() {
+        File file = new File(nickname + ".txt");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     private void closeConnection() { // метод для отключения от сервера
         setAuthorized(false);
+
+        prepairFile(); // при закрытии приложения осуществляем запись в файл
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(nickname + ".txt", true))) {
+
+            bufferedWriter.write(chatArea.getText()); // запись в файл текста из окна чата
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
         try {
             if (in != null) {
                 in.close();
@@ -170,12 +192,27 @@ public class Controller {
         }
     }
 
-    private void setLabelText(String inputMessage) { // метод для форматирования и вывода текста на лейбл
+    private void setLabelText(String inputMessage) { // метод для форматирования и вывода текста на лейбл и в чат
         String[] tokens = inputMessage.split("\\s+");
+        nickname = tokens[1];
         tokens[1] = "Вы вошли в чат под именем " + tokens[1];
         tokens[2] = " в " + tokens[2];
         tokens[3] = " // " + tokens[3];
         labelName.setText(tokens[1] + tokens[2] + tokens[3]);
+
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(nickname + ".txt"))) { // загрузка сообщений чата для конкретного пользователя
+            String line;
+            int line_count = 0;
+            while (((line = bufferedReader.readLine())!= null)&&line_count<100) {
+                chatArea.appendText(line + "\n"); // чтение из файла
+                line_count++;
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
