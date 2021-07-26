@@ -8,6 +8,8 @@ import javafx.scene.layout.HBox;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Controller {
     @FXML
@@ -33,6 +35,8 @@ public class Controller {
     private DataInputStream in;
     private DataOutputStream out;
     private String nickname;
+
+
 
     public void setAuthorized(boolean authorized) { // метод, который переключает интерфейс после авторизации
         msgPanel.setVisible(authorized);
@@ -99,8 +103,9 @@ public class Controller {
                 }
                 if (inputMessage.startsWith("/authok ")) {
                     setAuthorized(true);
-                    Platform.runLater(() -> setLabelText(inputMessage));// в JavaFX потоке установим текст для лейбла и выведем 100 строк чата
 
+                    Platform.runLater(() -> setLabelText(inputMessage));// в JavaFX потоке установим текст для лейбла и выведем 100 строк чата
+                    prepairFile(); // проверим, что есть файл для записи чата, зададим ему имя
 
                     break;
                 }
@@ -126,6 +131,13 @@ public class Controller {
                     continue;
                 }
                 chatArea.appendText(inputMessage + "\n");
+                try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(nickname +".txt",true))){
+
+                    bufferedWriter.write(inputMessage+"\n"); // запись в файл
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -149,14 +161,7 @@ public class Controller {
 
     private void closeConnection() { // метод для отключения от сервера
         setAuthorized(false);
-
-        prepairFile(); // при закрытии приложения осуществляем запись в файл
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(nickname + ".txt", true))) {
-
-            bufferedWriter.write(chatArea.getText()); // запись в файл текста из окна чата
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        chatArea.clear();
 
 
         try {
@@ -205,12 +210,18 @@ public class Controller {
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(nickname + ".txt"))) { // загрузка чата для конкретного пользователя
             String line;
+            LinkedList<String> text1 = new LinkedList<>();
+            LinkedList<String> text2 = new LinkedList<>();
             int line_count = 0;
-            while (((line = bufferedReader.readLine())!= null)) {
+            while (((line = bufferedReader.readLine()) != null)) {
+                text1.add(line);
+            }
+            while (!text1.isEmpty() && line_count <= 100) {
                 line_count++;
-                if(line_count>=100){
-                     chatArea.appendText(line + "\n"); // чтение из файла
-             }                
+                text2.addFirst(text1.removeLast());
+            }
+            while(!text2.isEmpty()){
+                chatArea.appendText(text2.removeFirst() + "\n");
             }
 
 
