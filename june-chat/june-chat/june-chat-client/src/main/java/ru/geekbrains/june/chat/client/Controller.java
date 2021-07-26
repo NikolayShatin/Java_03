@@ -1,24 +1,20 @@
 package ru.geekbrains.june.chat.client;
 
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.URL;
-import java.util.ResourceBundle;
 
 public class Controller {
     @FXML
     TextArea chatArea;
 
     @FXML
-    TextField messageField, usernameField;
+    TextField messageField, loginField;
 
     @FXML
     HBox authPanel, msgPanel, statusPanel; // добавили панель отображения статуса
@@ -28,6 +24,10 @@ public class Controller {
 
     @FXML
     Label labelName; // отображение статуса реализовано через лейбл
+
+    @FXML
+    PasswordField passwordField; // добавлено поле для ввода пароля
+
 
     private Socket socket;
     private DataInputStream in;
@@ -65,11 +65,12 @@ public class Controller {
         }
     }
 
-    public void tryToAuth() { // метод, отсылающий на сервер имя и команду авторизации
+    public void tryToAuth() { // метод, отсылающий на сервер логин/пароль и команду авторизации
         connect();
         try {
-            out.writeUTF("/auth " + usernameField.getText());
-            usernameField.clear();
+            out.writeUTF("/auth " + loginField.getText() + " " + passwordField.getText());
+            loginField.clear();
+            passwordField.clear();
         } catch (IOException e) {
             showError("Невозможно отправить запрос авторизации на сервер");
         }
@@ -99,6 +100,8 @@ public class Controller {
                 if (inputMessage.startsWith("/authok ")) {
                     setAuthorized(true);
                     Platform.runLater(() -> setLabelText(inputMessage));// в JavaFX потоке установим текст для лейбла и выведем 100 строк чата
+
+
                     break;
                 }
 
@@ -200,12 +203,14 @@ public class Controller {
         tokens[3] = " // " + tokens[3];
         labelName.setText(tokens[1] + tokens[2] + tokens[3]);
 
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(nickname + ".txt"))) { // загрузка сообщений чата для конкретного пользователя
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(nickname + ".txt"))) { // загрузка чата для конкретного пользователя
             String line;
             int line_count = 0;
-            while (((line = bufferedReader.readLine())!= null)&&line_count<100) {
-                chatArea.appendText(line + "\n"); // чтение из файла
+            while (((line = bufferedReader.readLine())!= null)) {
                 line_count++;
+                if(line_count>=100){
+                     chatArea.appendText(line + "\n"); // чтение из файла
+             }                
             }
 
 
