@@ -1,26 +1,22 @@
 package ru.geekbrains.june.chat.client;
 
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Controller {
     @FXML
     TextArea chatArea;
 
     @FXML
-    TextField messageField, usernameField;
+    TextField messageField, loginField;
 
     @FXML
     HBox authPanel, msgPanel, statusPanel; // добавили панель отображения статуса
@@ -31,9 +27,16 @@ public class Controller {
     @FXML
     Label labelName; // отображение статуса реализовано через лейбл
 
+    @FXML
+    PasswordField passwordField; // добавлено поле для ввода пароля
+
+
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+    private String nickname;
+
+
 
     public void setAuthorized(boolean authorized) { // метод, который переключает интерфейс после авторизации
         msgPanel.setVisible(authorized);
@@ -66,11 +69,12 @@ public class Controller {
         }
     }
 
-    public void tryToAuth() { // метод, отсылающий на сервер имя и команду авторизации
+    public void tryToAuth() { // метод, отсылающий на сервер логин/пароль и команду авторизации
         connect();
         try {
-            out.writeUTF("/auth " + usernameField.getText());
-            usernameField.clear();
+            out.writeUTF("/auth " + loginField.getText() + " " + passwordField.getText());
+            loginField.clear();
+            passwordField.clear();
         } catch (IOException e) {
             showError("Невозможно отправить запрос авторизации на сервер");
         }
@@ -99,7 +103,10 @@ public class Controller {
                 }
                 if (inputMessage.startsWith("/authok ")) {
                     setAuthorized(true);
-                    Platform.runLater(() -> setLabelText(inputMessage)); // в JavaFX потоке установим текст для лейбла
+
+                    Platform.runLater(() -> setLabelText(inputMessage));// в JavaFX потоке установим текст для лейбла и выведем 100 строк чата
+                    prepairFile(); // проверим, что есть файл для записи чата, зададим ему имя
+
                     break;
                 }
 
@@ -124,6 +131,13 @@ public class Controller {
                     continue;
                 }
                 chatArea.appendText(inputMessage + "\n");
+                try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(nickname +".txt",true))){
+
+                    bufferedWriter.write(inputMessage+"\n"); // запись в файл
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -132,8 +146,24 @@ public class Controller {
         }
     }
 
+
+    private void prepairFile() {
+        File file = new File(nickname + ".txt");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     private void closeConnection() { // метод для отключения от сервера
         setAuthorized(false);
+        chatArea.clear();
+
+
         try {
             if (in != null) {
                 in.close();
@@ -170,12 +200,35 @@ public class Controller {
         }
     }
 
-    private void setLabelText(String inputMessage) { // метод для форматирования и вывода текста на лейбл
+    private void setLabelText(String inputMessage) { // метод для форматирования и вывода текста на лейбл и в чат
         String[] tokens = inputMessage.split("\\s+");
+        nickname = tokens[1];
         tokens[1] = "Вы вошли в чат под именем " + tokens[1];
         tokens[2] = " в " + tokens[2];
         tokens[3] = " // " + tokens[3];
         labelName.setText(tokens[1] + tokens[2] + tokens[3]);
+
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(nickname + ".txt"))) { // загрузка чата для конкретного пользователя
+            String line;
+            LinkedList<String> text1 = new LinkedList<>();
+            LinkedList<String> text2 = new LinkedList<>();
+            int line_count = 0;
+            while (((line = bufferedReader.readLine()) != null)) {
+                text1.add(line);
+            }
+            while (!text1.isEmpty() && line_count <= 100) {
+                line_count++;
+                text2.addFirst(text1.removeLast());
+            }
+            while(!text2.isEmpty()){
+                chatArea.appendText(text2.removeFirst() + "\n");
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
