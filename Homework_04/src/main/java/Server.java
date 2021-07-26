@@ -1,17 +1,21 @@
-package ru.geekbrains.june.chat.server;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     private List<ClientHandler> clients;
+    private DataBaseAuthenticationProvider authenticationProvider;
+    private ExecutorService cachedThreadPool; // добавлен пул потоков
 
     public Server() { // конструктор сервера
         try {
             this.clients = new ArrayList<>();
+            cachedThreadPool = Executors.newCachedThreadPool(); // инициализация пула потоков при старте сервера
+            authenticationProvider = new DataBaseAuthenticationProvider();
             ServerSocket serverSocket = new ServerSocket(8189);
             System.out.println("Сервер запущен. Ожидаем подключение клиентов..");
             while (true) {
@@ -21,6 +25,9 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            authenticationProvider.disconnect();
+            cachedThreadPool.shutdown();
         }
     }
 
@@ -74,5 +81,14 @@ public class Server {
             }
         }
         sender.sendMessage("Пользователь " + receiverUsername + " не в сети");
+    }
+
+    public DataBaseAuthenticationProvider getAuthenticationProvider() {
+        return authenticationProvider;
+    }
+
+
+    public ExecutorService getCachedThreadPool() {
+        return cachedThreadPool;
     }
 }
