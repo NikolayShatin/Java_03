@@ -1,31 +1,44 @@
 package ru.geekbrains.june.chat.server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     private List<ClientHandler> clients;
+    private DataBaseAuthenticationProvider authenticationProvider;
+    private ExecutorService cachedThreadPool; // добавлен пул потоков
+    private Logger LOGGER = LogManager.getLogger(Server.class);
 
     public Server() { // конструктор сервера
         try {
             this.clients = new ArrayList<>();
+            cachedThreadPool = Executors.newCachedThreadPool(); // инициализация пула потоков при старте сервера
+            authenticationProvider = new DataBaseAuthenticationProvider();
             ServerSocket serverSocket = new ServerSocket(8189);
-            System.out.println("Сервер запущен. Ожидаем подключение клиентов..");
+            LOGGER.info("Сервер запущен. Ожидаем подключение клиентов..");
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Подключился новый клиент");
                 new ClientHandler(this, socket);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            authenticationProvider.disconnect();
+            cachedThreadPool.shutdown();
         }
     }
 
     public synchronized void subscribe(ClientHandler c) { //подписка клиента
         broadcastMessage("В чат зашел пользователь " + c.getUsername());
+
         clients.add(c);
         broadcastClientList();
     }
@@ -74,5 +87,14 @@ public class Server {
             }
         }
         sender.sendMessage("Пользователь " + receiverUsername + " не в сети");
+    }
+
+    public DataBaseAuthenticationProvider getAuthenticationProvider() {
+        return authenticationProvider;
+    }
+
+
+    public ExecutorService getCachedThreadPool() {
+        return cachedThreadPool;
     }
 }

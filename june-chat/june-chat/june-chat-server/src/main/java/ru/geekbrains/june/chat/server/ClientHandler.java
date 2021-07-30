@@ -1,10 +1,14 @@
 package ru.geekbrains.june.chat.server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 public class ClientHandler {
@@ -15,6 +19,8 @@ public class ClientHandler {
     private DataOutputStream out;
     private Date date; // добавили время, когда клиент подключился к серверу
     private SimpleDateFormat formatDate; // форматирование времени
+    private String mail; // сохраним для смены имени по имейлу
+    private final Logger LOGGER = LogManager.getLogger(ClientHandler.class); // лог событий
 
     public String getUsername() {
         return username;
@@ -26,7 +32,8 @@ public class ClientHandler {
             this.socket = socket;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            new Thread(() -> logic()).start(); // вынесли поток в отдельный метод, чтобы повысить читабельность
+            server.getCachedThreadPool().execute(()->{logic();}); // запускаем поток в кэше потоков
+            //new Thread(() -> logic()).start(); // вынесли поток в отдельный метод, чтобы повысить читабельность
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,7 +54,7 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            System.out.println("Клиент " + username + " отключился");
+            LOGGER.info("Клиент " + username + " отключился");
             server.unsubscribe(this);
             closeConnection();
         }
@@ -63,6 +70,13 @@ public class ClientHandler {
                 String[] tokens = inputMessage.split("\\s+", 3);
                 server.sendPersonalMessage(this, tokens[1], tokens[2]);
             }
+            if (inputMessage.startsWith("/chname ")) { // меняем имя пользователя
+                String[] tokens = inputMessage.split("\\s+", 2);
+                server.getAuthenticationProvider().changeName(tokens[1], mail);
+                sendMessage("/exit");
+            }
+
+
             return true;
         }
         server.broadcastMessage(username + ": " + inputMessage);
@@ -70,27 +84,28 @@ public class ClientHandler {
     }
 
     private boolean consumeAuthorizeMessage(String message) { // в авторизацию добавлена отсылку клиенту авторизованного имени и дату авторизации
-        if (message.startsWith("/auth ")) { // /auth bob
+        if (message.startsWith("/auth ")) { // /auth bob@freemail.com 123456
             String[] tokens = message.split("\\s+");
-            if (tokens.length == 1) {
-                sendMessage("SERVER: Вы не указали имя пользователя");
+            if (tokens.length == 1 || tokens.length == 2) {
+                sendMessage("SERVER: Вы не указали имя пользователя или пароль");
                 return false;
             }
-            if (tokens.length > 2) {
+            if (tokens.length > 3) {
                 sendMessage("SERVER: Имя пользователя не может состоять из нескольких слов");
                 return false;
             }
-            String selectedUsername = tokens[1];
-            if (server.isUsernameUsed(selectedUsername)) {
-                sendMessage("SERVER: Данное имя пользователя уже занято");
+            String selectedUsername = server.getAuthenticationProvider().getUsernameByLoginAndPassword(tokens[1] , tokens[2]); // проверяем, что
+            if (selectedUsername == null) {
+                sendMessage("SERVER: Неверное имя пользователя или пароль");
                 return false;
             }
             username = selectedUsername;
+            mail = tokens[1];
             date = new Date();
             formatDate = new SimpleDateFormat("HH:mm:ss yyyy.MM.dd");
             sendMessage("/authok "+username+ " " + formatDate.format(date));// отправка авторизационного сообщения с доп информацией о дате и имени
-            System.out.println("/authok "+username+" " + formatDate.format(date)); // для проверки, стереть
             server.subscribe(this);
+            LOGGER.info("Клиент " + username + " подтключился");
             return true;
         } else {
             sendMessage("SERVER: Вам необходимо авторизоваться");
@@ -120,5 +135,8 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        //server.getCachedThreadPool().shutdown(); // закрываем пул потоков
+
     }
 }
